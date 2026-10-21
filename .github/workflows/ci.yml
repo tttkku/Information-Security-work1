@@ -26,15 +26,15 @@ jobs:
 
       # ---------- SAST: Bandit 静态代码扫描 ----------
       - name: SAST - Bandit
+        continue-on-error: true # 失败仍然继续
         run: |
-          bandit -r . -x ./venv -f json -o bandit-report.json || true
-          bandit -r . -x ./venv
+          bandit -r . -x ./venv -f json -o bandit-report.json
 
       # ---------- SCA: pip-audit 依赖漏洞扫描 ----------
       - name: SCA - pip-audit
+        continue-on-error: true # 失败仍然继续
         run: |
-          pip-audit -r requirements.txt -f json -o pip-audit-report.json || true
-          pip-audit -r requirements.txt
+          pip-audit -r requirements.txt -f json -o pip-audit-report.json
 
       # ---------- 上传扫描报告，供截图 ----------
       - name: Upload security reports
