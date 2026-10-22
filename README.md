@@ -48,6 +48,22 @@ Configured `.github/workflows/ci.yml` in GitHub Actions with two security tools:
 
 The vulnerability is a logic error. Next.js uses the `x-middleware-subrequest` header internally to identify recursive sub-requests and prevent infinite middleware loops. However, it failed to filter this header from external requests. By forging this header, an attacker tricks the system into treating the request as a trusted internal sub-request, causing the middleware to skip the authentication logic entirely.
 
+## 6.1 Official Patch Analysis (Source Code Level)
+
+To fully understand the fix, we reviewed the official Next.js source code patch. As shown in the screenshots below:
+
+1. **`router-server.ts`**: The server now generates a cryptographically secure random `middlewareSubrequestId` upon startup.
+2. **`server-ipc/utils.ts`**: In the header filtering logic, the system now checks if the `x-middleware-subrequest` header is accompanied by the correct `x-middleware-subrequest-id`. If the ID does not match the server's internal random ID (meaning it's a forged external request), the header is stripped, and the middleware is not bypassed.
+3. **`web/sandbox/context.ts`**: When Next.js legitimately triggers internal sub-requests, it attaches the correct random ID to the header.
+
+**Conclusion**: The official fix eliminates the vulnerability by adding a hidden, unguessable token verification mechanism, preventing external attackers from forging internal headers.
+
+![1792638840002](image/README/1792638840002.png)
+
+![1792638846609](image/README/1792638846609.png)
+
+![1792638852351](image/README/1792638852351.png)
+
 ## 7. Applied Fix & Verification
 
 * **Fix**: Stopped the containers and modified `docker-compose.yml` to update the Next.js image version from the vulnerable version to the patched version (e.g., `15.2.3` or higher). Rebuilt and restarted the environment.
